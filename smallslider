@@ -1,0 +1,92 @@
+'use client'
+
+import React, {useState, useEffect,TouchEvent} from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+
+type articleSummary={
+  id:number,
+  attributes:{
+    title:string,
+    slug:string,
+    coverpicture:{data:coverpicture},
+    excerpt:string,
+  }
+}
+
+type coverpicture={
+  id:number,
+  attributes:{
+    name:string,
+    alternativeText:string,
+    caption:string,
+    width:number,
+    height:number,
+    url:string
+}
+}
+
+export function MiniSlider(props:{items:articleSummary[]}) {
+    const [slide, setSlide] = useState(0);
+    const [touchStart, setTouchStart] = useState(0);
+    const [touchEnd, setTouchEnd] = useState(0);
+
+    function handleTouchStart(e:TouchEvent<HTMLAnchorElement>) {
+        setTouchStart(e.targetTouches[0].clientX);
+    }
+    
+    function handleTouchMove(e:TouchEvent<HTMLAnchorElement>) {
+        setTouchEnd(e.targetTouches[0].clientX);
+    }
+
+    function handleTouchEnd(){
+        if (touchStart - touchEnd > 100) {
+            if (slide<(props.items.length-1)){
+                setSlide(previousState=>previousState+1);}
+            else setSlide(0);
+        }
+    
+        else if (touchStart - touchEnd < -100) {
+            if (slide>0){
+                setSlide(previousState=>previousState-1);}
+            else setSlide(props.items.length-1)
+        }
+    }
+
+    const imageLoader = (props:{src:string,width:number}) => {
+        return `< YOUR SERVER >${props.src}?w=${props.width}&q=100`
+      }
+    
+    return (
+        <div className="relative h-full w-full min-h-[300px] pt-8 overflow-hidden"> 
+            {props.items.map((item,index) => 
+                <Link key={index} href={`< YOUR PATH >/${props.items[slide].attributes.slug}`}
+                    className={`absolute left-[50%] h-2/3 aspect-video rounded-xl ease-in-out duration-500 shadow-[0_0_20px_5px_rgba(255,255,255,0.25)] overflow-hidden`} 
+                    style={{transform:`translateX(${-50-20*(slide-index)}%) scale(${1-0.15*Math.abs(slide-index)})`,
+                            zIndex:10-Math.abs(slide-index),
+                            opacity:1-0.2*Math.abs(slide-index)}} onTouchStart={(e)=>handleTouchStart(e)} onTouchMove={(e)=>handleTouchMove(e)} onTouchEnd={()=>handleTouchEnd()}>
+                        {item.attributes.coverpicture.data &&
+                            <Image 
+                                loader={imageLoader}
+                                src={item.attributes.coverpicture.data.attributes.url} 
+                                alt={item.attributes.coverpicture.data.attributes.alternativeText} 
+                                width={1200}
+                                height={775}
+                                className={`absolute h-full w-full object-cover`}
+                            />}
+                        {!item.attributes.coverpicture.data && <div className="absolute">{props.items[slide].attributes.title}</div>}
+                </Link>)}
+            <div className="absolute bottom-3 w-full flex flex-nowrap px-5 justify-between" >
+                <button className="flex-grow-0" onClick={()=>setSlide(slide - 1)} disabled={(slide===0)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-13 mx-auto" viewBox="0 -960 960 960" fill="black"><path d="M400-80 0-480l400-400 56 57-343 343 343 343-56 57Z"/></svg>
+                </button>
+                <Link href={`< YOUR PATH >/${props.items[slide].attributes.slug}`}>
+                    <div className="cursor-pointer p-1 rounded mx-1 text-black opacity-75 text-base min-[400px]:text-xl font-bold ">{props.items[slide].attributes.title}</div>
+                </Link> 
+                <button className="flex-grow-0" onClick={()=>setSlide(slide + 1)} disabled={(slide===props.items.length-1)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-13 mx-auto" viewBox="0 -960 960 960" fill="black"><path d="m304-82-56-57 343-343-343-343 56-57 400 400L304-82Z"/></svg>
+                </button>
+            </div>
+        </div>
+    )
+};
