@@ -5,9 +5,7 @@ no external packages
   
 # FULL SCREEN  
 
-Uploading Screen Recording 2023-08-04 at 23.53.35.mov…
+https://github.com/pappitti/reactsliders/assets/90358606/e54861b1-069c-482e-95bc-ba326af44d35
 
 # SMALL SLIDER
-
-Uploading Screen Recording 2023-08-04 at 23.54.46.mov…
 
