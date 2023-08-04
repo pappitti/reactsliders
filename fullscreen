@@ -1,0 +1,105 @@
+'use client'
+
+import React, {useState, useEffect,TouchEvent} from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+
+type articleSummary={
+  id:number,
+  attributes:{
+    title:string,
+    slug:string,
+    coverpicture:{data:coverpicture},
+    excerpt:string,
+  }
+}
+
+type coverpicture={
+  id:number,
+  attributes:{
+    name:string,
+    alternativeText:string,
+    caption:string,
+    width:number,
+    height:number,
+    url:string
+}
+}
+
+export default function Slider(props:{items:articleSummary[]}) { 
+    const [slide, setSlide] = useState(0);
+    const [touchStart, setTouchStart] = useState(0);
+    const [touchEnd, setTouchEnd] = useState(0);
+
+    function handleTouchStart(e:TouchEvent<HTMLDivElement>) {
+        setTouchStart(e.targetTouches[0].clientX);
+    }
+    
+    function handleTouchMove(e:TouchEvent<HTMLDivElement>) {
+        setTouchEnd(e.targetTouches[0].clientX);
+    }
+
+    function handleTouchEnd(){
+        if (touchStart - touchEnd > 150) {
+            if (slide<(props.items.length-1)){
+                setSlide(previousState=>previousState+1);}
+            else setSlide(0);
+        }
+    
+        else if (touchStart - touchEnd < -150) {
+            if (slide>0){
+                setSlide(previousState=>previousState-1);}
+            else setSlide(props.items.length-1)
+        }
+    }
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setSlide(slide===props.items.length-1?0:(slide + 1));
+        }, 5000);
+        return () => clearInterval(interval);
+    },[slide]);
+
+    const imageLoader = (props:{src:string,width:number}) => {
+        return `< YOUR SERVER >${props.src}?w=${props.width}&q=100`
+      }
+    return (
+        <div className={'relative w-screen h-[50vh] md:h-[90vh]'}>
+            <div className="relative h-full overflow-hidden flex flex-nowrap">
+                {props.items.map((item,index) => 
+                    <div key={index} className={`h-full w-screen flex shrink-0 content-center ${slide===0?"":"ease-in-out duration-500"}`} style={{transform:`translateX(-${slide*100}%)`}} onTouchStart={(e)=>handleTouchStart(e)} onTouchMove={(e)=>handleTouchMove(e)} onTouchEnd={()=>handleTouchEnd()}>
+                        {item.attributes.coverpicture.data &&
+                            <Image 
+                                loader={imageLoader}
+                                src={item.attributes.coverpicture.data.attributes.url} 
+                                alt={item.attributes.coverpicture.data.attributes.alternativeText}
+                                width={1200}
+                                height={775}
+                                priority={true}
+                                className={`absolute h-full w-full object-cover`}
+                        />}
+                        <div className="absolute h-full w-full bg-gray-600 opacity-40"></div>
+                        <div className="relative w-full my-auto">
+                            <div className="relative w-full py-5 px-2 sm:px-20 mx-auto sm:mb-10 text-3xl text-center text-white sm:text-5xl">{item.attributes.title}</div>
+                            <div className="relative w-full py-5 px-2 mx-auto text-base text-center text-white sm:visible sm:px-20  sm:text-xl sm:w-4/5 hidden md:flex">{item.attributes.excerpt}</div>
+                            <div className="relative w-full flex mt-5 justify-center">
+                                <Link className="relative bg-white opacity-50 mx-auto p-3 rounded hover:opacity-80" href={`< YOUR PATH >/${item.attributes.slug}`}>"Read article"</Link>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+            <div className="absolute left-5 md:left-15 top-[50%] md:-translate-y-10 cursor-pointer" onClick={()=>setSlide(slide===0?props.items.length-1:(slide - 1))}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-9 md:h-[80px] md:w-[120px]" viewBox="0 -960 960 960" fill="white"><path d="M400-80 0-480l400-400 56 57-343 343 343 343-56 57Z"/></svg>
+            </div>
+            <div className="absolute right-5 md:right-15 top-[50%] md:-translate-y-10 cursor-pointer" onClick={()=>setSlide(slide===props.items.length-1?0:(slide + 1))}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-9 md:h-[80px] md:w-[120px]" viewBox="0 -960 960 960" fill="white"><path d="m304-82-56-57 343-343-343-343 56-57 400 400L304-82Z"/></svg>
+            </div>
+            <ul className="absolute invisible md:visible w-full bottom-10 flex flex-nowrap justify-center">
+                {props.items.map((color,index) => <li key={index} className={`w-12 cursor-pointer h-1 mx-1 ${(slide===index)?"bg-black shadow-[0_0_20px_5px_rgba(255,255,255,0.33)]":"bg-white"}`} onClick={()=>setSlide(index)}></li>)}
+            </ul>
+
+        </div>
+    )
+
+};
